@@ -53,3 +53,4 @@ packages/database/prisma/migrations/
 
 # Docker
 docker-compose.override.yml
+.pnpm-store/

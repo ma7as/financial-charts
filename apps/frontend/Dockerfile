@@ -1,23 +1,10 @@
-FROM node:20-alpine AS base
+FROM node:20-alpine
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
-
-FROM base AS dependencies
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/frontend/package.json ./apps/frontend/
-RUN pnpm install --frozen-lockfile
-
-FROM base AS build
-COPY --from=dependencies /app/node_modules ./node_modules
-COPY . .
-RUN pnpm --filter @financial-charts/frontend build
-
-FROM base AS production
-ENV NODE_ENV=production
-COPY --from=dependencies /app/node_modules ./node_modules
-COPY --from=build /app/apps/frontend/.next ./apps/frontend/.next
-COPY --from=build /app/apps/frontend/public ./apps/frontend/public
-COPY --from=build /app/apps/frontend/package.json ./apps/frontend/
-WORKDIR /app/apps/frontend
+COPY packages/database/package.json ./packages/database/
+RUN pnpm install --frozen-lockfile --shamefully-hoist
+COPY apps/frontend ./apps/frontend
 EXPOSE 3000
-CMD ["pnpm", "start"]
+CMD ["sh", "-c", "cd /app/apps/frontend && /app/node_modules/.bin/next dev"]
